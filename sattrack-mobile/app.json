@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "SatTrack",
+    "slug": "sattrack-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.suhi10.sattrack",
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5e4c6b67-941a-413a-9d49-2bfb68f32407"
+      }
+    }
+  }
+}

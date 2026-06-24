@@ -1,0 +1,19 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Node modules and build output
+sattrack-mobile/node_modules/
+sattrack-mobile/.expo/
+sattrack-mobile/web-build/
+
+# Python cache
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Operating system files
+.DS_Store
+Thumbs.db
