@@ -342,9 +342,12 @@ export const GroundTrackMap: React.FC<GroundTrackMapProps> = ({
 
       orbitLayer.clearLayers();
       const orbitPts = [];
+      const periodMin = (2 * Math.PI) / satrec.no;
+      const step = Math.max(1, Math.round(periodMin / 180));
+      const halfPeriod = periodMin / 2;
 
-      // Calculate continuous orbit path (-90m to +90m)
-      for (let offset = -90; offset <= 90; offset++) {
+      // Calculate continuous entire orbit path based on satellite's specific orbital period
+      for (let offset = -halfPeriod; offset <= halfPeriod; offset += step) {
         const timeOffset = new Date(baseTime.getTime() + offset * 60 * 1000);
         const state = propagate(timeOffset);
         if (state) orbitPts.push(state);
