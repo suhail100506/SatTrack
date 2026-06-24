@@ -162,6 +162,7 @@ export const GroundTrackMap: React.FC<GroundTrackMapProps> = ({
 
     function propagate(date) {
       try {
+        satrec.error = 0;
         const pVal = satellite.propagate(satrec, date);
         if (!pVal || !pVal.position || !pVal.velocity) return null;
         
