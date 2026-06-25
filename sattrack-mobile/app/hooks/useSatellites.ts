@@ -7,7 +7,7 @@ import { SatelliteResult } from '../types/satellite';
 // If you are running on an emulator on the same PC:
 // - Android Emulator: use 'http://10.0.2.2:5000'
 // - iOS Simulator / Physical Device: use your machine's local Wi-Fi IP (e.g. 'http://192.168.X.X:5000')
-export const API_BASE_URL = 'http://172.29.75.146:5005';
+export const API_BASE_URL = 'http://192.168.48.161:5005';
 
 export const useSatellites = (trackingEnabled: boolean = true, searchQuery: string = "") => {
   const [loading, setLoading] = useState<boolean>(true);
