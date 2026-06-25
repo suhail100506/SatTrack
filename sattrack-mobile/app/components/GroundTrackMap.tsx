@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ActivityIndicator, Modal, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
+import { API_BASE_URL } from '../hooks/useSatellites';
 
 interface GroundTrackMapProps {
   tleLine1: string;
@@ -28,10 +29,10 @@ export const GroundTrackMap: React.FC<GroundTrackMapProps> = ({
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/satellite.js@4.0.0/dist/satellite.min.js"></script>
-  <script src="https://unpkg.com/leaflet-terminator@0.1.0/L.Terminator.js"></script>
+  <link rel="stylesheet" href="${API_BASE_URL}/static/leaflet.css" />
+  <script src="${API_BASE_URL}/static/leaflet.js"></script>
+  <script src="${API_BASE_URL}/static/satellite.min.js"></script>
+  <script src="${API_BASE_URL}/static/L.Terminator.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
