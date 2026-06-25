@@ -10,17 +10,22 @@ app = Flask(__name__)
 import os
 import json
 
-MONGO_URI = "mongodb+srv://mohammedsuhail100506:mongo10@cluster0.zjpg81g.mongodb.net/"
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
 mongo_fallback = False
 
 try:
-    print("Connecting to MongoDB Atlas...")
-    client = pymongo.MongoClient(MONGO_URI, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=3000)
+    if "mongodb+srv" in MONGO_URI or "ssl=true" in MONGO_URI.lower() or "tls=true" in MONGO_URI.lower():
+        print("Connecting to remote MongoDB with TLS...")
+        client = pymongo.MongoClient(MONGO_URI, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=3000)
+    else:
+        print("Connecting to local/community MongoDB...")
+        client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=3000)
+        
     db = client["sattrack"]
     sat_col = db["satellites"]
     # Test connection
     client.admin.command('ping')
-    print("Successfully connected to MongoDB Atlas!")
+    print("Successfully connected to MongoDB!")
     
     # Auto-seed the database if it is empty
     if sat_col.count_documents({}) == 0:

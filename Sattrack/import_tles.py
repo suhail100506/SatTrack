@@ -4,7 +4,7 @@ import pymongo
 from pymongo import UpdateOne
 import certifi
 
-MONGO_URI = "mongodb+srv://mohammedsuhail100506:mongo10@cluster0.zjpg81g.mongodb.net/"
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
 
 def parse_tle_file(filepath):
     satellites = []
@@ -68,8 +68,12 @@ def main():
 
     # 2. Try uploading to MongoDB Atlas
     try:
-        print("Connecting to MongoDB Atlas...")
-        client = pymongo.MongoClient(MONGO_URI, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=5000)
+        if "mongodb+srv" in MONGO_URI or "ssl=true" in MONGO_URI.lower() or "tls=true" in MONGO_URI.lower():
+            print("Connecting to remote MongoDB with TLS...")
+            client = pymongo.MongoClient(MONGO_URI, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=5000)
+        else:
+            print("Connecting to local/community MongoDB...")
+            client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
         db = client["sattrack"]
         sat_col = db["satellites"]
         
