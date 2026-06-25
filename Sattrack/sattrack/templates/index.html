@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SatTrack — Live Satellite Tracking & Footprint Simulator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Leaflet & CSS CDNs -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/satellite.js@4.0.0/dist/satellite.min.js"></script>
+  <script src="https://unpkg.com/leaflet-terminator@0.1.0/L.Terminator.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0a0b0d;
+      --panel-bg: rgba(20, 22, 28, 0.75);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent-blue: #3b82f6;
+      --accent-green: #10b981;
+      --accent-yellow: #f59e0b;
+      --font-family: 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header Bar */
+    header {
+      height: 60px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 24px;
+      background-color: rgba(10, 11, 13, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      fill: var(--accent-blue);
+      filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 6px 12px;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+
+    /* Main Container */
+    .app-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Sidebar Panel */
+    .sidebar {
+      width: 380px;
+      border-right: 1px solid var(--border-color);
+      background-color: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 999;
+    }
+
+    .panel-section {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* Location Form */
+    .form-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      flex: 1;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .form-group input {
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--text-main);
+      font-family: var(--font-family);
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn {
+      width: 100%;
+      background-color: var(--accent-blue);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background-color: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      margin-top: 8px;
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Search Box */
+    .search-container {
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: var(--text-main);
+      font-family: var(--font-family);
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.15);
+    }
+
+    /* Satellite list */
+    .sat-list-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sat-list-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sat-card {
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sat-card:hover {
+      background-color: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .sat-card.active {
+      border-color: var(--accent-blue);
+      background-color: rgba(59, 130, 246, 0.08);
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.1);
+    }
+
+    .sat-card-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sat-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .sat-details {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .sat-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .sat-badge.visible {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .sat-badge.non-visible {
+      background-color: rgba(156, 163, 175, 0.15);
+      color: var(--text-muted);
+      border: 1px solid rgba(156, 163, 175, 0.25);
+    }
+
+    /* Map Area */
+    .map-container {
+      flex: 1;
+      position: relative;
+      background-color: var(--bg-dark);
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-dark);
+    }
+
+    /* Floating Stats Panel */
+    .stats-panel {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      background-color: rgba(10, 11, 13, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      width: 320px;
+      z-index: 1000;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .stats-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat-box {
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      margin-top: 2px;
+    }
+
+    /* Time Control Slider Panel */
+    .timeline-panel {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      right: 24px;
+      background-color: rgba(10, 11, 13, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 24px;
+      z-index: 1000;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .timeline-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .timeline-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .timeline-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      width: 48px;
+    }
+
+    .timeline-slider {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background-color: rgba(255, 255, 255, 0.1);
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .timeline-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background-color: var(--accent-blue);
+      border: 2px solid white;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    }
+
+    .btn-resume {
+      background-color: var(--accent-yellow);
+      color: var(--bg-dark);
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: none;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: none;
+    }
+
+    /* Custom Leaflet UI Styles */
+    .leaflet-bar {
+      border: 1px solid var(--border-color) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+      border-radius: 8px !important;
+      overflow: hidden;
+    }
+
+    .leaflet-bar a {
+      background-color: rgba(20, 22, 28, 0.9) !important;
+      color: white !important;
+      border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    .leaflet-bar a:hover {
+      background-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .leaflet-tooltip-custom {
+      background: rgba(10, 11, 13, 0.95) !important;
+      border: 1px solid var(--border-color) !important;
+      color: white !important;
+      font-family: var(--font-family);
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      border-radius: 6px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-container">
+      <svg class="logo-icon" viewBox="0 0 24 24">
+        <path d="M5 2C3.34 2 2 3.34 2 5v2c0 1.66 1.34 3 3 3h2v2H5c-1.66 0-3 1.34-3 3v2c0 1.66 1.34 3 3 3h2c1.66 0 3-1.34 3-3v-2h4v2c0 1.66 1.34 3 3 3h2c1.66 0 3-1.34 3-3v-2c0-1.66-1.34-3-3-3h-2v-2h2c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3h-2c-1.66 0-3 1.34-3 3v2h-4V5c0-1.66-1.34-3-3-3H5zm0 2h2v4H5c-.55 0-1-.45-1-1V5c0-.55.45-1 1-1zm12 0h2c.55 0 1 .45 1 1v2c0 .55-.45 1-1 1h-2V4zm-6 3.5c2.48 0 4.5 2.02 4.5 4.5s-2.02 4.5-4.5 4.5-4.5-2.02-4.5-4.5 2.02-4.5 4.5-4.5zm0 1.5c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+      </svg>
+      <h1>SatTrack Dashboard</h1>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      <span>Backend Live (Port 5002)</span>
+    </div>
+  </header>
+
+  <div class="app-container">
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+      
+      <!-- Observer Location Selector -->
+      <div class="panel-section">
+        <div class="section-title">Observer Location</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="obs-lat">Latitude</label>
+            <input type="number" id="obs-lat" step="0.0001" value="13.0827">
+          </div>
+          <div class="form-group">
+            <label for="obs-lon">Longitude</label>
+            <input type="number" id="obs-lon" step="0.0001" value="77.5877">
+          </div>
+        </div>
+        <button class="btn" id="btn-use-gps">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+          Detect Location
+        </button>
+      </div>
+
+      <!-- Search satellites -->
+      <div class="panel-section">
+        <div class="section-title">Search Satellites</div>
+        <div class="search-container">
+          <input type="text" class="search-input" id="sat-search" placeholder="Type name (e.g. Starlink, NOAA)...">
+        </div>
+      </div>
+
+      <!-- Satellites dynamic List -->
+      <div class="sat-list-container" id="sat-list">
+        <div style="text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 20px;">
+          Connecting and fetching satellite listings...
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Map View -->
+    <div class="map-container">
+      <div id="map"></div>
+      
+      <!-- Real-Time Metrics Floating Panel -->
+      <div class="stats-panel" id="stats-panel">
+        <div class="stats-title" id="stats-sat-name">Satellite Coordinates</div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">Latitude</div>
+            <div class="stat-value" id="val-lat">0.0000°</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Longitude</div>
+            <div class="stat-value" id="val-lon">0.0000°</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Altitude</div>
+            <div class="stat-value" id="val-alt">0 km</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Velocity</div>
+            <div class="stat-value" id="val-vel">0.00 km/s</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Elevation</div>
+            <div class="stat-value" id="val-el">0.0°</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Azimuth</div>
+            <div class="stat-value" id="val-az">0.0°</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline Control Slider Panel -->
+      <div class="timeline-panel" id="timeline-panel">
+        <div class="timeline-header">
+          <div class="timeline-title" id="timeline-time-label">Timeline Control (Real-Time)</div>
+          <button class="btn-resume" id="btn-resume-live">Resume Live</button>
+        </div>
+        <div class="timeline-slider-row">
+          <span class="timeline-label" style="text-align: right;">-90 Min</span>
+          <input type="range" class="timeline-slider" id="time-slider" min="-90" max="90" value="0">
+          <span class="timeline-label">90 Min</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Initialize leaflet map
+    const map = L.map('map', {
+      zoomControl: true,
+      minZoom: 1,
+      maxZoom: 10,
+      worldCopyJump: true,
+      attributionControl: false
+    }).setView([13.0827, 77.5877], 2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    let observerLat = 13.0827;
+    let observerLon = 77.5877;
+    let selectedSatellite = null;
+    let satellites = [];
+    let pollingInterval = null;
+    let timeOffsetMinutes = 0; // Timeline slider offset
+
+    // Layer groups
+    const observerLayer = L.layerGroup().addTo(map);
+    const footprintLayer = L.layerGroup().addTo(map);
+    const orbitLayer = L.layerGroup().addTo(map);
+    const terminatorLayer = L.layerGroup().addTo(map);
+    let satMarker = null;
+
+    // Elements
+    const obsLatInput = document.getElementById('obs-lat');
+    const obsLonInput = document.getElementById('obs-lon');
+    const searchInput = document.getElementById('sat-search');
+    const satListContainer = document.getElementById('sat-list');
+    const statsPanel = document.getElementById('stats-panel');
+    const timelinePanel = document.getElementById('timeline-panel');
+    const timeSlider = document.getElementById('time-slider');
+    const timeLabel = document.getElementById('timeline-time-label');
+    const btnResumeLive = document.getElementById('btn-resume-live');
+
+    // Init observer
+    updateObserverLocation();
+
+    // Event handlers
+    obsLatInput.addEventListener('change', handleLocationChange);
+    obsLonInput.addEventListener('change', handleLocationChange);
+    searchInput.addEventListener('input', fetchSatellites);
+    timeSlider.addEventListener('input', handleTimelineChange);
+    btnResumeLive.addEventListener('click', resumeLiveTracking);
+
+    document.getElementById('btn-use-gps').addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          obsLatInput.value = position.coords.latitude.toFixed(4);
+          obsLonInput.value = position.coords.longitude.toFixed(4);
+          handleLocationChange();
+        });
+      }
+    });
+
+    function handleLocationChange() {
+      observerLat = parseFloat(obsLatInput.value) || 0;
+      observerLon = parseFloat(obsLonInput.value) || 0;
+      updateObserverLocation();
+      fetchSatellites();
+    }
+
+    function updateObserverLocation() {
+      observerLayer.clearLayers();
+      L.circleMarker([observerLat, observerLon], {
+        radius: 6,
+        color: '#FF0000',
+        fillColor: '#FF0000',
+        fillOpacity: 1.0,
+        weight: 1
+      }).bindTooltip("Observer Position", { permanent: false, direction: 'top', className: 'leaflet-tooltip-custom' }).addTo(observerLayer);
+    }
+
+    function handleTimelineChange() {
+      timeOffsetMinutes = parseInt(timeSlider.value);
+      if (timeOffsetMinutes === 0) {
+        timeLabel.innerText = "Timeline Control (Real-Time)";
+        btnResumeLive.style.display = 'none';
+      } else {
+        timeLabel.innerText = `Timeline Control (${timeOffsetMinutes > 0 ? '+' : ''}${timeOffsetMinutes} Min)`;
+        btnResumeLive.style.display = 'inline-block';
+      }
+      updateMapData();
+    }
+
+    function resumeLiveTracking() {
+      timeSlider.value = 0;
+      handleTimelineChange();
+    }
+
+    // Load satellite list
+    async function fetchSatellites() {
+      const search = searchInput.value.trim();
+      try {
+        const response = await fetch(`/satellites?lat=${observerLat}&lon=${observerLon}&search=${search}`);
+        const data = await response.json();
+        satellites = data.satellites || [];
+        renderSatelliteList();
+      } catch (e) {
+        console.error("Failed to load satellites:", e);
+      }
+    }
+
+    function renderSatelliteList() {
+      satListContainer.innerHTML = '';
+      if (satellites.length === 0) {
+        satListContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 13px;">No satellites found.</div>';
+        return;
+      }
+
+      satellites.forEach(sat => {
+        const card = document.createElement('div');
+        card.className = `sat-card ${selectedSatellite && selectedSatellite.name === sat.name ? 'active' : ''}`;
+        card.onclick = () => selectSatellite(sat);
+
+        const visibleClass = sat.visible ? 'visible' : 'non-visible';
+        const visibleText = sat.visible ? 'Visible' : 'Not Visible';
+
+        card.innerHTML = `
+          <div class="sat-card-left">
+            <div class="sat-name">${sat.name}</div>
+            <div class="sat-details">El: ${sat.elevation_deg}° | Alt: ${sat.sat_altitude_km ? Math.round(sat.sat_altitude_km) : 0} km</div>
+          </div>
+          <div class="sat-badge ${visibleClass}">${visibleText}</div>
+        `;
+        satListContainer.appendChild(card);
+      });
+    }
+
+    function selectSatellite(sat) {
+      selectedSatellite = sat;
+      renderSatelliteList();
+      
+      // Reset Timeline
+      timeSlider.value = 0;
+      timeOffsetMinutes = 0;
+      timeLabel.innerText = "Timeline Control (Real-Time)";
+      btnResumeLive.style.display = 'none';
+
+      // Display controls
+      statsPanel.style.display = 'flex';
+      timelinePanel.style.display = 'flex';
+      
+      updateMapData(true);
+    }
+
+    function getFootprintRadiusMeters(altKm) {
+      const Re = 6371;
+      const eps = 10 * Math.PI / 180;
+      const rRatio = Re / (Re + altKm);
+      const val = rRatio * Math.cos(eps);
+      if (val >= 1.0) return 0;
+      return Re * (Math.acos(val) - eps) * 1000;
+    }
+
+    function buildSegments(pts) {
+      const segs = [];
+      let cur = [];
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        if (cur.length > 0) {
+          const last = cur[cur.length - 1];
+          if (Math.abs(p.lon - last[1]) > 180) {
+            segs.push(cur);
+            cur = [];
+          }
+        }
+        cur.push([p.lat, p.lon]);
+      }
+      if (cur.length > 0) segs.push(cur);
+      return segs;
+    }
+
+    function updateMapData(panToCenter = false) {
+      if (!selectedSatellite) return;
+
+      const satrec = satellite.twoline2satrec(selectedSatellite.tle_line1, selectedSatellite.tle_line2);
+      const baseTime = new Date(Date.now() + timeOffsetMinutes * 60 * 1000);
+      
+      function propagate(date) {
+        try {
+          satrec.error = 0;
+          const pVal = satellite.propagate(satrec, date);
+          if (!pVal || !pVal.position || !pVal.velocity) return null;
+          
+          const gmst = satellite.gstime(date);
+          const posGd = satellite.eciToGeodetic(pVal.position, gmst);
+          
+          const lat = satellite.degreesLat(posGd.latitude);
+          const lon = satellite.degreesLong(posGd.longitude);
+          const alt = posGd.height;
+          
+          const vx = pVal.velocity.x;
+          const vy = pVal.velocity.y;
+          const vz = pVal.velocity.z;
+          const vel = Math.sqrt(vx*vx + vy*vy + vz*vz);
+          
+          // Calculate observer look angles
+          const observerGeodetic = {
+            latitude: satellite.degreesToRadians(observerLat),
+            longitude: satellite.degreesToRadians(observerLon),
+            height: 0
+          };
+          const positionEcf = satellite.eciToEcf(pVal.position, gmst);
+          const lookAngles = satellite.ecfToLookAngles(observerGeodetic, positionEcf);
+          const el = satellite.radiansToDegrees(lookAngles.elevation);
+          const az = satellite.radiansToDegrees(lookAngles.azimuth);
+          
+          return { lat, lon, alt, vel, el, az };
+        } catch (e) {
+          return null;
+        }
+      }
+
+      const state = propagate(baseTime);
+      if (!state) return;
+
+      // Update Floating panel text
+      document.getElementById('stats-sat-name').innerText = selectedSatellite.name;
+      document.getElementById('val-lat').innerText = `${state.lat.toFixed(4)}°`;
+      document.getElementById('val-lon').innerText = `${state.lon.toFixed(4)}°`;
+      document.getElementById('val-alt').innerText = `${Math.round(state.alt)} km`;
+      document.getElementById('val-vel').innerText = `${state.vel.toFixed(2)} km/s`;
+      document.getElementById('val-el').innerText = `${state.el.toFixed(1)}°`;
+      document.getElementById('val-az').innerText = `${state.az.toFixed(1)}°`;
+
+      // Update Marker position
+      if (!satMarker) {
+        const satIcon = L.divIcon({
+          html: `
+            <div style="position: relative; width: 32px; height: 32px; display: flex; justify-content: center; align-items: center;">
+              <div style="position: absolute; width: 24px; height: 24px; border-radius: 50%; background: rgba(59, 130, 246, 0.4); animation: pulse 2s infinite ease-out;"></div>
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="#3b82f6" style="filter: drop-shadow(0 0 6px rgba(59,130,246,0.6));">
+                <path d="M5 2C3.34 2 2 3.34 2 5v2c0 1.66 1.34 3 3 3h2v2H5c-1.66 0-3 1.34-3 3v2c0 1.66 1.34 3 3 3h2c1.66 0 3-1.34 3-3v-2h4v2c0 1.66 1.34 3 3 3h2c1.66 0 3-1.34 3-3v-2c0-1.66-1.34-3-3-3h-2v-2h2c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3h-2c-1.66 0-3 1.34-3 3v2h-4V5c0-1.66-1.34-3-3-3H5zm0 2h2v4H5c-.55 0-1-.45-1-1V5c0-.55.45-1 1-1zm12 0h2c.55 0 1 .45 1 1v2c0 .55-.45 1-1 1h-2V4zm-6 3.5c2.48 0 4.5 2.02 4.5 4.5s-2.02 4.5-4.5 4.5-4.5-2.02-4.5-4.5 2.02-4.5 4.5-4.5zm0 1.5c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+              </svg>
+            </div>
+            <style>
+              @keyframes pulse {
+                0% { transform: scale(0.5); opacity: 1; }
+                100% { transform: scale(2.0); opacity: 0; }
+              }
+            </style>
+          `,
+          className: 'custom-sat-icon',
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        });
+        satMarker = L.marker([state.lat, state.lon], { icon: satIcon }).addTo(map);
+      } else {
+        satMarker.setLatLng([state.lat, state.lon]);
+      }
+
+      if (panToCenter) {
+        map.panTo([state.lat, state.lon]);
+      }
+
+      // Footprint
+      footprintLayer.clearLayers();
+      const radiusMeters = getFootprintRadiusMeters(state.alt);
+      L.circle([state.lat, state.lon], {
+        radius: radiusMeters,
+        color: 'rgba(59, 130, 246, 0.4)',
+        fillColor: 'rgba(59, 130, 246, 0.08)',
+        weight: 1.5
+      }).addTo(footprintLayer);
+
+      // Orbit lines
+      orbitLayer.clearLayers();
+      const orbitPts = [];
+      const periodMin = (2 * Math.PI) / satrec.no;
+      const step = Math.max(1, Math.round(periodMin / 180));
+      const halfPeriod = periodMin / 2;
+
+      for (let offset = -halfPeriod; offset <= halfPeriod; offset += step) {
+        const timeOffset = new Date(baseTime.getTime() + offset * 60 * 1000);
+        const pState = propagate(timeOffset);
+        if (pState) orbitPts.push(pState);
+      }
+
+      buildSegments(orbitPts).forEach(seg => {
+        L.polyline(seg, { color: '#000000', weight: 5.0, opacity: 0.3 }).addTo(orbitLayer);
+        L.polyline(seg, { color: '#f59e0b', weight: 2.5, opacity: 0.9 }).addTo(orbitLayer);
+      });
+
+      // Day/Night Terminator
+      terminatorLayer.clearLayers();
+      try {
+        L.terminator({
+          time: baseTime.toISOString(),
+          color: '#000',
+          opacity: 0.35,
+          fillColor: '#000',
+          fillOpacity: 0.35,
+          weight: 0
+        }).addTo(terminatorLayer);
+      } catch (e) {}
+    }
+
+    // Refresh every 5 seconds if live
+    setInterval(() => {
+      if (timeOffsetMinutes === 0) {
+        updateMapData();
+      }
+    }, 5000);
+
+    // Initial load
+    fetchSatellites();
+  </script>
+
+</body>
+</html>

@@ -1,5 +1,5 @@
 import pymongo
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from .visibility import SatelliteVisibilityEngine, SatelliteRecord
 from .sample_tles import build_sample_satellites
 import certifi
@@ -97,6 +97,10 @@ def load_satellites(search_query=""):
             continue
         records.append(SatelliteRecord(name=sat.name, line1=sat.line1, line2=sat.line2))
     return records
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/satellites', methods=['GET'])
 def get_satellites():
