@@ -13,13 +13,13 @@ so you can see the full range of behaviour:
 Replace SAMPLE_TLES with rows pulled from your own TLE database.
 """
 
-from visibility import (
+from sattrack.visibility import (
     SatelliteRecord,
     SatelliteVisibilityEngine,
     visibility_circle_radius_km,
     PASS_SEARCH_HORIZON_HOURS,
 )
-from sample_tles import build_sample_satellites
+from sattrack.sample_tles import build_sample_satellites
 
 # NOTE: TLEs go stale within days/weeks. In production, refresh these
 # regularly (e.g. nightly) from your TLE source and store epoch + lines

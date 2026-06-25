@@ -14,7 +14,7 @@ import math
 from datetime import datetime, timezone
 
 from skyfield.api import load
-from visibility import SatelliteRecord
+from .visibility import SatelliteRecord
 
 GM_EARTH = 398600.4418  # km^3 / s^2
 EARTH_RADIUS_KM = 6371.0

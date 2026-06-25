@@ -34,9 +34,15 @@ def parse_tle_file(filepath):
     return satellites
 
 def main():
-    tle_dir = r"C:\Users\trgb\Satellite Track Demo Application\TLEs"
-    txt_files = [f for f in os.listdir(tle_dir) if f.endswith(".txt")]
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    tle_dir = os.path.join(base_dir, "TLEs")
     
+    if not os.path.exists(tle_dir):
+        print(f"TLEs directory not found at: {tle_dir}")
+        print("Skipping import. Please create a 'TLEs' directory in the project root and place Celestrak .txt files there if you want to import fresh data.")
+        return
+        
+    txt_files = [f for f in os.listdir(tle_dir) if f.endswith(".txt")]
     print(f"Found {len(txt_files)} TLE files in {tle_dir}")
     
     all_sats = {}

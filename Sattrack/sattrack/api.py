@@ -1,15 +1,18 @@
 import pymongo
 from flask import Flask, jsonify, request
-from visibility import SatelliteVisibilityEngine, SatelliteRecord
-from sample_tles import build_sample_satellites
+from .visibility import SatelliteVisibilityEngine, SatelliteRecord
+from .sample_tles import build_sample_satellites
 import certifi
+import os
+import json
+import dotenv
+
+# Load environment variables from .env if present
+dotenv.load_dotenv()
 
 app = Flask(__name__)
 
 # Connect to MongoDB
-import os
-import json
-
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
 mongo_fallback = False
 
@@ -212,4 +215,5 @@ def delete_satellite(name):
         return jsonify({"error": f"Satellite '{name}' not found."}), 404
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5005, debug=True)
+    port = int(os.environ.get("PORT", 5002))
+    app.run(host='0.0.0.0', port=port, debug=True)
