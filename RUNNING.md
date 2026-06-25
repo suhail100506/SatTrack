@@ -31,7 +31,8 @@ Ensure your local MongoDB Community Server is running on port `27017` (default) 
    python run.py
    ```
    * The server runs at `http://0.0.0.0:5002` by default.
-   * **Test it:** Open `http://localhost:5002/satellites?lat=13.0827&lon=77.5877` in your browser.
+   * **Web Dashboard:** Open `http://localhost:5002` in your browser to view the interactive tracking dashboard.
+   * **API Test:** Open `http://localhost:5002/satellites?lat=13.0827&lon=77.5877` in your browser to check raw satellite positions.
 
 ---
 
